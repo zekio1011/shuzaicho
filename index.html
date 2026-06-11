@@ -8,187 +8,134 @@
 <meta name="theme-color" content="#111111">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="取材帳">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;color:#111;background:#f6f6f6}
 body{max-width:900px;margin:0 auto;padding:18px 14px 80px}
-h1{font-size:30px;margin:18px 0 4px}
-.sub{color:#666;margin:0 0 18px}
-.version{display:inline-block;background:#111;color:#fff;border-radius:999px;padding:4px 10px;font-size:12px;margin-bottom:12px}
+h1{font-size:30px;margin:18px 0 4px}.sub{color:#666}.version{display:inline-block;background:#111;color:#fff;border-radius:999px;padding:4px 10px;font-size:12px}
 .panel,.card{background:white;border-radius:18px;padding:14px;margin:12px 0;box-shadow:0 4px 18px rgba(0,0,0,.06)}
 input,textarea,select{box-sizing:border-box;width:100%;font-size:16px;margin:6px 0;padding:12px;border:1px solid #ddd;border-radius:12px;background:#fff}
-textarea{min-height:88px}
-button{font-size:16px;border:0;border-radius:12px;padding:11px 14px;margin:6px 4px 0 0;background:#111;color:white}
-button.secondary{background:#e9e9e9;color:#111}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.badge{display:inline-block;background:#eee;border-radius:999px;padding:4px 9px;margin:4px 4px 4px 0;font-size:13px}
-.meta{color:#555;font-size:14px;line-height:1.7}
-pre{white-space:pre-wrap;font-family:inherit;background:#f7f7f7;padding:10px;border-radius:10px}
-.search{position:sticky;top:0;background:#f6f6f6;padding-top:8px;z-index:2}
-.empty{color:#777;text-align:center;padding:28px}
+textarea{min-height:88px}button{font-size:16px;border:0;border-radius:12px;padding:11px 14px;margin:6px 4px 0 0;background:#111;color:white}
+button.secondary{background:#e9e9e9;color:#111}button.danger{background:#ffe8e8;color:#b00020}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.badge{display:inline-block;background:#eee;border-radius:999px;padding:4px 9px;margin:4px 4px 4px 0;font-size:13px}
+.meta{color:#555;font-size:14px;line-height:1.7}pre{white-space:pre-wrap;font-family:inherit;background:#f7f7f7;padding:10px;border-radius:10px}
+.search{position:sticky;top:0;background:#f6f6f6;padding-top:8px;z-index:2}.empty{color:#777;text-align:center;padding:28px}.hidden{display:none}
+.userbar{display:flex;align-items:center;gap:10px;justify-content:space-between}.userinfo{font-size:13px;color:#555;overflow:hidden;text-overflow:ellipsis}
+.notice{background:#fff7d6;border:1px solid #f0d56b;border-radius:14px;padding:10px;margin:10px 0;font-size:14px}
 </style>
 </head>
 <body>
 <h1>取材帳</h1>
-<div class="version">v3 no-cache</div>
-<p class="sub">取材先・専門家・連絡状況をスマホで管理</p>
+<div class="version">v4 Firebase共有版</div>
+<p class="sub">Googleログインして、チームで取材先を共有</p>
 
-<div class="search">
-<input id="q" placeholder="検索：名前・所属・タグ・メモ">
+<div class="panel userbar">
+  <div><b id="loginStatus">未ログイン</b><div class="userinfo" id="userInfo">ログインすると共有データを表示します</div></div>
+  <div><button id="loginBtn" type="button">Googleログイン</button><button id="logoutBtn" class="secondary hidden" type="button">ログアウト</button></div>
 </div>
 
-<div class="panel">
-<input id="contactName" placeholder="名前">
-<input id="org" placeholder="所属・肩書き">
-<div class="row">
-<input id="phone" placeholder="電話番号">
-<input id="mail" placeholder="メール">
-</div>
-<input id="sns" placeholder="SNS / URL">
-<input id="tag" placeholder="専門分野タグ 例：洞窟, 気象, 医療">
-<div class="row">
-<input id="lastDate" type="date" title="最終連絡日">
-<input id="nextDate" type="date" title="次回連絡日">
-</div>
-<select id="contactStatus">
-<option>未連絡</option>
-<option>連絡済</option>
-<option>返信待ち</option>
-<option>取材OK</option>
-<option>NG</option>
-</select>
-<textarea id="memo" placeholder="メモ・NG条件・聞きたいこと"></textarea>
-<button id="addBtn" type="button">登録</button>
-<button id="csvBtn" class="secondary" type="button">CSV出力</button>
+<div id="appArea" class="hidden">
+  <div class="notice">共有版：登録した内容は同じURLを開いたログインユーザーにも表示されます。</div>
+  <div class="search"><input id="q" placeholder="検索：名前・所属・タグ・メモ"></div>
+  <div class="panel">
+    <input id="contactName" placeholder="名前">
+    <input id="org" placeholder="所属・肩書き">
+    <div class="row"><input id="phone" placeholder="電話番号"><input id="mail" placeholder="メール"></div>
+    <input id="sns" placeholder="SNS / URL">
+    <input id="tag" placeholder="専門分野タグ 例：洞窟, 気象, 医療">
+    <div class="row"><input id="lastDate" type="date"><input id="nextDate" type="date"></div>
+    <select id="contactStatus"><option>未連絡</option><option>連絡済</option><option>返信待ち</option><option>取材OK</option><option>NG</option></select>
+    <textarea id="memo" placeholder="メモ・NG条件・聞きたいこと"></textarea>
+    <button id="addBtn" type="button">登録</button><button id="csvBtn" class="secondary" type="button">CSV出力</button>
+  </div>
+  <h2>登録一覧</h2><div id="list"></div>
 </div>
 
-<h2>登録一覧</h2>
-<div id="list"></div>
-
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
 (function(){
-  // 古いService Workerを削除。キャッシュ地獄を止める。
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-      for (let registration of registrations) {
-        registration.unregister();
-      }
-    }).catch(function(){});
+  if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBvmUFOEdgNwJoDLLtIITOdFbaUcXF6L7A",
+    authDomain: "shuzaicho-team.firebaseapp.com",
+    projectId: "shuzaicho-team",
+    storageBucket: "shuzaicho-team.firebasestorage.app",
+    messagingSenderId: "343514004414",
+    appId: "1:343514004414:web:fe444415a36f09be3517ef"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const contactsRef = db.collection("contacts");
+  const $ = id => document.getElementById(id);
+  let data = [], unsubscribe = null;
+
+  function esc(s){return String(s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+  function loggedIn(user){
+    $("loginStatus").textContent="ログイン中";
+    $("userInfo").textContent=(user.displayName||"名前なし")+" / "+(user.email||"");
+    $("loginBtn").classList.add("hidden"); $("logoutBtn").classList.remove("hidden"); $("appArea").classList.remove("hidden");
+    if(unsubscribe) unsubscribe();
+    unsubscribe = contactsRef.orderBy("createdAt","desc").onSnapshot(snap=>{
+      data = snap.docs.map(doc=>({id:doc.id,...doc.data()})); render();
+    }, e=>alert("データ取得エラー："+e.message));
   }
-
-  const $ = (id) => document.getElementById(id);
-  let data = JSON.parse(localStorage.getItem("shuzaicho_v3") || "[]");
-
-  function save(){
-    localStorage.setItem("shuzaicho_v3", JSON.stringify(data));
-    render();
+  function loggedOut(){
+    $("loginStatus").textContent="未ログイン"; $("userInfo").textContent="ログインすると共有データを表示します";
+    $("loginBtn").classList.remove("hidden"); $("logoutBtn").classList.add("hidden"); $("appArea").classList.add("hidden");
+    if(unsubscribe) unsubscribe(); data=[]; render();
   }
-
-  function addItem(){
-    const contactName = $("contactName").value.trim();
-    if(!contactName){
-      alert("名前を入れてね");
-      return;
-    }
-
-    data.unshift({
-      name: contactName,
-      org: $("org").value.trim(),
-      phone: $("phone").value.trim(),
-      mail: $("mail").value.trim(),
-      sns: $("sns").value.trim(),
-      tag: $("tag").value.trim(),
-      lastDate: $("lastDate").value,
-      nextDate: $("nextDate").value,
-      status: $("contactStatus").value,
-      memo: $("memo").value.trim(),
-      createdAt: new Date().toISOString()
+  async function login(){
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try{ await auth.signInWithPopup(provider); }
+    catch(e){ try{ await auth.signInWithRedirect(provider); } catch(err){ alert("ログインエラー："+err.message); } }
+  }
+  async function addItem(){
+    const user=auth.currentUser; if(!user){alert("先にログインしてね");return;}
+    const contactName=$("contactName").value.trim(); if(!contactName){alert("名前を入れてね");return;}
+    await contactsRef.add({
+      name:contactName, org:$("org").value.trim(), phone:$("phone").value.trim(), mail:$("mail").value.trim(),
+      sns:$("sns").value.trim(), tag:$("tag").value.trim(), lastDate:$("lastDate").value, nextDate:$("nextDate").value,
+      status:$("contactStatus").value, memo:$("memo").value.trim(), createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      createdByUid:user.uid, createdByName:user.displayName||"", createdByEmail:user.email||""
     });
-
-    save();
-
-    ["contactName","org","phone","mail","sns","tag","lastDate","nextDate","memo"].forEach(id => $(id).value = "");
-    $("contactStatus").value = "未連絡";
-    alert("登録したよ！");
+    ["contactName","org","phone","mail","sns","tag","lastDate","nextDate","memo"].forEach(id=>$(id).value="");
+    $("contactStatus").value="未連絡";
   }
-
-  function del(index){
-    if(confirm("削除する？")){
-      data.splice(index,1);
-      save();
-    }
-  }
-
-  function escapeHtml(str){
-    return String(str || "").replace(/[&<>"']/g, s => ({
-      "&":"&amp;","<":"&gt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    }[s]));
-  }
-
+  async function del(id){ if(confirm("削除する？")) await contactsRef.doc(id).delete(); }
   function render(){
-    const query = ($("q").value || "").toLowerCase();
-    const list = $("list");
-    const filtered = data.filter(x => JSON.stringify(x).toLowerCase().includes(query));
-
-    list.innerHTML = "";
-
-    if(filtered.length === 0){
-      list.innerHTML = '<div class="empty">まだ登録がないよ</div>';
-      return;
-    }
-
-    filtered.forEach((x) => {
-      const index = data.indexOf(x);
-      const tags = (x.tag || "")
-        .split(",")
-        .map(t => t.trim())
-        .filter(Boolean)
-        .map(t => `<span class="badge">${escapeHtml(t)}</span>`)
-        .join("");
-
-      const phone = x.phone ? `<a href="tel:${escapeHtml(x.phone)}">${escapeHtml(x.phone)}</a>` : "";
-      const mail = x.mail ? `<a href="mailto:${escapeHtml(x.mail)}">${escapeHtml(x.mail)}</a>` : "";
-
-      const div = document.createElement("div");
-      div.className = "card";
-      div.innerHTML = `
-        <h3>${escapeHtml(x.name)}</h3>
-        <div class="meta">
-          ${escapeHtml(x.org)}<br>
-          📞 ${phone}<br>
-          ✉️ ${mail}<br>
-          🔗 ${escapeHtml(x.sns)}<br>
-          🗓️ 最終連絡日: ${escapeHtml(x.lastDate || "未設定")} / 次回: ${escapeHtml(x.nextDate || "未設定")}<br>
-          状態: <b>${escapeHtml(x.status)}</b>
-        </div>
-        <div>${tags}</div>
-        <pre>${escapeHtml(x.memo)}</pre>
-        <button class="secondary" type="button" data-index="${index}">削除</button>
-      `;
-      div.querySelector("button").addEventListener("click", () => del(index));
-      list.appendChild(div);
+    const list=$("list"); if(!list) return;
+    const q=($("q").value||"").toLowerCase();
+    const filtered=data.filter(x=>JSON.stringify(x).toLowerCase().includes(q));
+    list.innerHTML="";
+    if(filtered.length===0){ list.innerHTML='<div class="empty">まだ登録がないよ</div>'; return; }
+    filtered.forEach(x=>{
+      const tags=(x.tag||"").split(",").map(t=>t.trim()).filter(Boolean).map(t=>`<span class="badge">${esc(t)}</span>`).join("");
+      const phone=x.phone?`<a href="tel:${esc(x.phone)}">${esc(x.phone)}</a>`:"";
+      const mail=x.mail?`<a href="mailto:${esc(x.mail)}">${esc(x.mail)}</a>`:"";
+      const div=document.createElement("div"); div.className="card";
+      div.innerHTML=`<h3>${esc(x.name)}</h3><div class="meta">${esc(x.org)}<br>📞 ${phone}<br>✉️ ${mail}<br>🔗 ${esc(x.sns)}<br>🗓️ 最終連絡日: ${esc(x.lastDate||"未設定")} / 次回: ${esc(x.nextDate||"未設定")}<br>状態: <b>${esc(x.status)}</b><br>登録者: ${esc(x.createdByName||x.createdByEmail||"不明")}</div><div>${tags}</div><pre>${esc(x.memo)}</pre><button class="danger" type="button">削除</button>`;
+      div.querySelector("button").addEventListener("click",()=>del(x.id)); list.appendChild(div);
     });
   }
-
   function exportCSV(){
-    const headers=["名前","所属・肩書き","電話番号","メール","SNS","タグ","最終連絡日","次回連絡日","状態","メモ"];
-    const rows=data.map(x=>[x.name,x.org,x.phone,x.mail,x.sns,x.tag,x.lastDate,x.nextDate,x.status,x.memo]);
+    const headers=["名前","所属・肩書き","電話番号","メール","SNS","タグ","最終連絡日","次回連絡日","状態","メモ","登録者"];
+    const rows=data.map(x=>[x.name,x.org,x.phone,x.mail,x.sns,x.tag,x.lastDate,x.nextDate,x.status,x.memo,x.createdByEmail]);
     const csv=[headers,...rows].map(r=>r.map(v=>`"${String(v||"").replaceAll('"','""')}"`).join(",")).join("\n");
     const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");
-    a.href=url;
-    a.download="取材帳.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="取材帳.csv"; a.click(); URL.revokeObjectURL(url);
   }
-
-  $("addBtn").addEventListener("click", addItem);
-  $("csvBtn").addEventListener("click", exportCSV);
-  $("q").addEventListener("input", render);
-
-  render();
+  $("loginBtn").addEventListener("click",login);
+  $("logoutBtn").addEventListener("click",()=>auth.signOut());
+  $("addBtn").addEventListener("click",addItem);
+  $("csvBtn").addEventListener("click",exportCSV);
+  $("q").addEventListener("input",render);
+  auth.onAuthStateChanged(user=>user?loggedIn(user):loggedOut());
 })();
 </script>
 </body>
