@@ -15,6 +15,7 @@
 body{max-width:900px;margin:0 auto;padding:18px 14px 80px}
 h1{font-size:30px;margin:18px 0 4px}
 .sub{color:#666;margin:0 0 18px}
+.version{display:inline-block;background:#111;color:#fff;border-radius:999px;padding:4px 10px;font-size:12px;margin-bottom:12px}
 .panel,.card{background:white;border-radius:18px;padding:14px;margin:12px 0;box-shadow:0 4px 18px rgba(0,0,0,.06)}
 input,textarea,select{box-sizing:border-box;width:100%;font-size:16px;margin:6px 0;padding:12px;border:1px solid #ddd;border-radius:12px;background:#fff}
 textarea{min-height:88px}
@@ -30,6 +31,7 @@ pre{white-space:pre-wrap;font-family:inherit;background:#f7f7f7;padding:10px;bor
 </head>
 <body>
 <h1>取材帳</h1>
+<div class="version">v3 no-cache</div>
 <p class="sub">取材先・専門家・連絡状況をスマホで管理</p>
 
 <div class="search">
@@ -66,18 +68,20 @@ pre{white-space:pre-wrap;font-family:inherit;background:#f7f7f7;padding:10px;bor
 
 <script>
 (function(){
-  const $ = (id) => document.getElementById(id);
-
+  // 古いService Workerを削除。キャッシュ地獄を止める。
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
-    });
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+      for (let registration of registrations) {
+        registration.unregister();
+      }
+    }).catch(function(){});
   }
 
-  let data = JSON.parse(localStorage.getItem("shuzaicho_pwa_v2") || "[]");
+  const $ = (id) => document.getElementById(id);
+  let data = JSON.parse(localStorage.getItem("shuzaicho_v3") || "[]");
 
   function save(){
-    localStorage.setItem("shuzaicho_pwa_v2", JSON.stringify(data));
+    localStorage.setItem("shuzaicho_v3", JSON.stringify(data));
     render();
   }
 
@@ -118,7 +122,7 @@ pre{white-space:pre-wrap;font-family:inherit;background:#f7f7f7;padding:10px;bor
 
   function escapeHtml(str){
     return String(str || "").replace(/[&<>"']/g, s => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      "&":"&amp;","<":"&gt;",">":"&gt;",'"':"&quot;","'":"&#39;"
     }[s]));
   }
 
