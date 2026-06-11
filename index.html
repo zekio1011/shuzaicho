@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>取材帳</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="取材帳">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;color:#111;background:#f6f6f6}
+body{max-width:900px;margin:0 auto;padding:18px 14px 80px}
+h1{font-size:30px;margin:18px 0 4px}
+.sub{color:#666;margin:0 0 18px}
+.panel,.card{background:white;border-radius:18px;padding:14px;margin:12px 0;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+input,textarea,select{box-sizing:border-box;width:100%;font-size:16px;margin:6px 0;padding:12px;border:1px solid #ddd;border-radius:12px;background:#fff}
+textarea{min-height:88px}
+button{font-size:16px;border:0;border-radius:12px;padding:11px 14px;margin:6px 4px 0 0;background:#111;color:white}
+button.secondary{background:#e9e9e9;color:#111}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.badge{display:inline-block;background:#eee;border-radius:999px;padding:4px 9px;margin:4px 4px 4px 0;font-size:13px}
+.meta{color:#555;font-size:14px;line-height:1.7}
+pre{white-space:pre-wrap;font-family:inherit;background:#f7f7f7;padding:10px;border-radius:10px}
+.search{position:sticky;top:0;background:#f6f6f6;padding-top:8px;z-index:2}
+.empty{color:#777;text-align:center;padding:28px}
+</style>
+</head>
+<body>
+<h1>取材帳</h1>
+<p class="sub">取材先・専門家・連絡状況をスマホで管理</p>
+
+<div class="search">
+<input id="q" placeholder="検索：名前・所属・タグ・メモ" oninput="render()">
+</div>
+
+<div class="panel">
+<input id="name" placeholder="名前">
+<input id="org" placeholder="所属・肩書き">
+<div class="row">
+<input id="phone" placeholder="電話番号">
+<input id="mail" placeholder="メール">
+</div>
+<input id="sns" placeholder="SNS / URL">
+<input id="tag" placeholder="専門分野タグ 例：洞窟, 気象, 医療">
+<div class="row">
+<input id="lastDate" type="date" title="最終連絡日">
+<input id="nextDate" type="date" title="次回連絡日">
+</div>
+<select id="status">
+<option>未連絡</option>
+<option>連絡済</option>
+<option>返信待ち</option>
+<option>取材OK</option>
+<option>NG</option>
+</select>
+<textarea id="memo" placeholder="メモ・NG条件・聞きたいこと"></textarea>
+<button onclick="addItem()">登録</button>
+<button class="secondary" onclick="exportCSV()">CSV出力</button>
+</div>
+
+<h2>登録一覧</h2>
+<div id="list"></div>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));
+}
+
+let data = JSON.parse(localStorage.getItem("shuzaicho_pwa") || "[]");
+
+function save(){
+ localStorage.setItem("shuzaicho_pwa", JSON.stringify(data));
+ render();
+}
+
+function addItem(){
+ if(!name.value.trim()){ alert("名前を入れてね"); return; }
+ data.unshift({
+  name:name.value.trim(),
+  org:org.value.trim(),
+  phone:phone.value.trim(),
+  mail:mail.value.trim(),
+  sns:sns.value.trim(),
+  tag:tag.value.trim(),
+  lastDate:lastDate.value,
+  nextDate:nextDate.value,
+  status:status.value,
+  memo:memo.value.trim(),
+  createdAt:new Date().toISOString()
+ });
+ save();
+ document.querySelectorAll("input:not(#q),textarea").forEach(e=>e.value="");
+ status.value="未連絡";
+}
+
+function del(i){
+ if(confirm("削除する？")){
+  data.splice(i,1);
+  save();
+ }
+}
+
+function mailLink(x){
+ return x.mail ? `<a href="mailto:${x.mail}">${x.mail}</a>` : "";
+}
+
+function phoneLink(x){
+ return x.phone ? `<a href="tel:${x.phone}">${x.phone}</a>` : "";
+}
+
+function render(){
+ const query=(q.value||"").toLowerCase();
+ const filtered=data.filter(x => JSON.stringify(x).toLowerCase().includes(query));
+ list.innerHTML="";
+ if(filtered.length===0){
+   list.innerHTML='<div class="empty">まだ登録がないよ</div>';
+   return;
+ }
+ filtered.forEach((x)=>{
+   const i=data.indexOf(x);
+   const tags=(x.tag||"").split(",").map(t=>t.trim()).filter(Boolean).map(t=>`<span class="badge">${t}</span>`).join("");
+   list.innerHTML += `
+   <div class="card">
+   <h3>${x.name}</h3>
+   <div class="meta">
+   ${x.org || ""}<br>
+   📞 ${phoneLink(x)}<br>
+   ✉️ ${mailLink(x)}<br>
+   🔗 ${x.sns || ""}<br>
+   🗓️ 最終連絡日: ${x.lastDate || "未設定"} / 次回: ${x.nextDate || "未設定"}<br>
+   状態: <b>${x.status}</b>
+   </div>
+   <div>${tags}</div>
+   <pre>${x.memo || ""}</pre>
+   <button class="secondary" onclick="del(${i})">削除</button>
+   </div>`;
+ });
+}
+
+function exportCSV(){
+ const headers=["名前","所属・肩書き","電話番号","メール","SNS","タグ","最終連絡日","次回連絡日","状態","メモ"];
+ const rows=data.map(x=>[x.name,x.org,x.phone,x.mail,x.sns,x.tag,x.lastDate,x.nextDate,x.status,x.memo]);
+ const csv=[headers,...rows].map(r=>r.map(v=>`"${String(v||"").replaceAll('"','""')}"`).join(",")).join("\n");
+ const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url; a.download="取材帳.csv"; a.click();
+ URL.revokeObjectURL(url);
+}
+render();
+</script>
+</body>
+</html>
