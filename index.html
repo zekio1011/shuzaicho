@@ -26,7 +26,7 @@ button.secondary{background:#e9e9e9;color:#111}button.danger{background:#ffe8e8;
 </head>
 <body>
 <h1>取材帳</h1>
-<div class="version">v4 Firebase共有版</div>
+<div class="version">v4.1 Firebase共有版</div>
 <p class="sub">Googleログインして、チームで取材先を共有</p>
 
 <div class="panel userbar">
@@ -92,8 +92,11 @@ button.secondary{background:#e9e9e9;color:#111}button.danger{background:#ffe8e8;
   }
   async function login(){
     const provider = new firebase.auth.GoogleAuthProvider();
-    try{ await auth.signInWithPopup(provider); }
-    catch(e){ try{ await auth.signInWithRedirect(provider); } catch(err){ alert("ログインエラー："+err.message); } }
+    try{
+      await auth.signInWithRedirect(provider);
+    }catch(err){
+      alert("ログインエラー："+err.message);
+    }
   }
   async function addItem(){
     const user=auth.currentUser; if(!user){alert("先にログインしてね");return;}
