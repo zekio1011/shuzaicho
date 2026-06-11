@@ -33,11 +33,11 @@ pre{white-space:pre-wrap;font-family:inherit;background:#f7f7f7;padding:10px;bor
 <p class="sub">取材先・専門家・連絡状況をスマホで管理</p>
 
 <div class="search">
-<input id="q" placeholder="検索：名前・所属・タグ・メモ" oninput="render()">
+<input id="q" placeholder="検索：名前・所属・タグ・メモ">
 </div>
 
 <div class="panel">
-<input id="name" placeholder="名前">
+<input id="contactName" placeholder="名前">
 <input id="org" placeholder="所属・肩書き">
 <div class="row">
 <input id="phone" placeholder="電話番号">
@@ -49,7 +49,7 @@ pre{white-space:pre-wrap;font-family:inherit;background:#f7f7f7;padding:10px;bor
 <input id="lastDate" type="date" title="最終連絡日">
 <input id="nextDate" type="date" title="次回連絡日">
 </div>
-<select id="status">
+<select id="contactStatus">
 <option>未連絡</option>
 <option>連絡済</option>
 <option>返信待ち</option>
@@ -57,100 +57,135 @@ pre{white-space:pre-wrap;font-family:inherit;background:#f7f7f7;padding:10px;bor
 <option>NG</option>
 </select>
 <textarea id="memo" placeholder="メモ・NG条件・聞きたいこと"></textarea>
-<button onclick="addItem()">登録</button>
-<button class="secondary" onclick="exportCSV()">CSV出力</button>
+<button id="addBtn" type="button">登録</button>
+<button id="csvBtn" class="secondary" type="button">CSV出力</button>
 </div>
 
 <h2>登録一覧</h2>
 <div id="list"></div>
 
 <script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));
-}
+(function(){
+  const $ = (id) => document.getElementById(id);
 
-let data = JSON.parse(localStorage.getItem("shuzaicho_pwa") || "[]");
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+    });
+  }
 
-function save(){
- localStorage.setItem("shuzaicho_pwa", JSON.stringify(data));
- render();
-}
+  let data = JSON.parse(localStorage.getItem("shuzaicho_pwa_v2") || "[]");
 
-function addItem(){
- if(!name.value.trim()){ alert("名前を入れてね"); return; }
- data.unshift({
-  name:name.value.trim(),
-  org:org.value.trim(),
-  phone:phone.value.trim(),
-  mail:mail.value.trim(),
-  sns:sns.value.trim(),
-  tag:tag.value.trim(),
-  lastDate:lastDate.value,
-  nextDate:nextDate.value,
-  status:status.value,
-  memo:memo.value.trim(),
-  createdAt:new Date().toISOString()
- });
- save();
- document.querySelectorAll("input:not(#q),textarea").forEach(e=>e.value="");
- status.value="未連絡";
-}
+  function save(){
+    localStorage.setItem("shuzaicho_pwa_v2", JSON.stringify(data));
+    render();
+  }
 
-function del(i){
- if(confirm("削除する？")){
-  data.splice(i,1);
-  save();
- }
-}
+  function addItem(){
+    const contactName = $("contactName").value.trim();
+    if(!contactName){
+      alert("名前を入れてね");
+      return;
+    }
 
-function mailLink(x){
- return x.mail ? `<a href="mailto:${x.mail}">${x.mail}</a>` : "";
-}
+    data.unshift({
+      name: contactName,
+      org: $("org").value.trim(),
+      phone: $("phone").value.trim(),
+      mail: $("mail").value.trim(),
+      sns: $("sns").value.trim(),
+      tag: $("tag").value.trim(),
+      lastDate: $("lastDate").value,
+      nextDate: $("nextDate").value,
+      status: $("contactStatus").value,
+      memo: $("memo").value.trim(),
+      createdAt: new Date().toISOString()
+    });
 
-function phoneLink(x){
- return x.phone ? `<a href="tel:${x.phone}">${x.phone}</a>` : "";
-}
+    save();
 
-function render(){
- const query=(q.value||"").toLowerCase();
- const filtered=data.filter(x => JSON.stringify(x).toLowerCase().includes(query));
- list.innerHTML="";
- if(filtered.length===0){
-   list.innerHTML='<div class="empty">まだ登録がないよ</div>';
-   return;
- }
- filtered.forEach((x)=>{
-   const i=data.indexOf(x);
-   const tags=(x.tag||"").split(",").map(t=>t.trim()).filter(Boolean).map(t=>`<span class="badge">${t}</span>`).join("");
-   list.innerHTML += `
-   <div class="card">
-   <h3>${x.name}</h3>
-   <div class="meta">
-   ${x.org || ""}<br>
-   📞 ${phoneLink(x)}<br>
-   ✉️ ${mailLink(x)}<br>
-   🔗 ${x.sns || ""}<br>
-   🗓️ 最終連絡日: ${x.lastDate || "未設定"} / 次回: ${x.nextDate || "未設定"}<br>
-   状態: <b>${x.status}</b>
-   </div>
-   <div>${tags}</div>
-   <pre>${x.memo || ""}</pre>
-   <button class="secondary" onclick="del(${i})">削除</button>
-   </div>`;
- });
-}
+    ["contactName","org","phone","mail","sns","tag","lastDate","nextDate","memo"].forEach(id => $(id).value = "");
+    $("contactStatus").value = "未連絡";
+    alert("登録したよ！");
+  }
 
-function exportCSV(){
- const headers=["名前","所属・肩書き","電話番号","メール","SNS","タグ","最終連絡日","次回連絡日","状態","メモ"];
- const rows=data.map(x=>[x.name,x.org,x.phone,x.mail,x.sns,x.tag,x.lastDate,x.nextDate,x.status,x.memo]);
- const csv=[headers,...rows].map(r=>r.map(v=>`"${String(v||"").replaceAll('"','""')}"`).join(",")).join("\n");
- const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
- const url=URL.createObjectURL(blob);
- const a=document.createElement("a");
- a.href=url; a.download="取材帳.csv"; a.click();
- URL.revokeObjectURL(url);
-}
-render();
+  function del(index){
+    if(confirm("削除する？")){
+      data.splice(index,1);
+      save();
+    }
+  }
+
+  function escapeHtml(str){
+    return String(str || "").replace(/[&<>"']/g, s => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[s]));
+  }
+
+  function render(){
+    const query = ($("q").value || "").toLowerCase();
+    const list = $("list");
+    const filtered = data.filter(x => JSON.stringify(x).toLowerCase().includes(query));
+
+    list.innerHTML = "";
+
+    if(filtered.length === 0){
+      list.innerHTML = '<div class="empty">まだ登録がないよ</div>';
+      return;
+    }
+
+    filtered.forEach((x) => {
+      const index = data.indexOf(x);
+      const tags = (x.tag || "")
+        .split(",")
+        .map(t => t.trim())
+        .filter(Boolean)
+        .map(t => `<span class="badge">${escapeHtml(t)}</span>`)
+        .join("");
+
+      const phone = x.phone ? `<a href="tel:${escapeHtml(x.phone)}">${escapeHtml(x.phone)}</a>` : "";
+      const mail = x.mail ? `<a href="mailto:${escapeHtml(x.mail)}">${escapeHtml(x.mail)}</a>` : "";
+
+      const div = document.createElement("div");
+      div.className = "card";
+      div.innerHTML = `
+        <h3>${escapeHtml(x.name)}</h3>
+        <div class="meta">
+          ${escapeHtml(x.org)}<br>
+          📞 ${phone}<br>
+          ✉️ ${mail}<br>
+          🔗 ${escapeHtml(x.sns)}<br>
+          🗓️ 最終連絡日: ${escapeHtml(x.lastDate || "未設定")} / 次回: ${escapeHtml(x.nextDate || "未設定")}<br>
+          状態: <b>${escapeHtml(x.status)}</b>
+        </div>
+        <div>${tags}</div>
+        <pre>${escapeHtml(x.memo)}</pre>
+        <button class="secondary" type="button" data-index="${index}">削除</button>
+      `;
+      div.querySelector("button").addEventListener("click", () => del(index));
+      list.appendChild(div);
+    });
+  }
+
+  function exportCSV(){
+    const headers=["名前","所属・肩書き","電話番号","メール","SNS","タグ","最終連絡日","次回連絡日","状態","メモ"];
+    const rows=data.map(x=>[x.name,x.org,x.phone,x.mail,x.sns,x.tag,x.lastDate,x.nextDate,x.status,x.memo]);
+    const csv=[headers,...rows].map(r=>r.map(v=>`"${String(v||"").replaceAll('"','""')}"`).join(",")).join("\n");
+    const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download="取材帳.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  $("addBtn").addEventListener("click", addItem);
+  $("csvBtn").addEventListener("click", exportCSV);
+  $("q").addEventListener("input", render);
+
+  render();
+})();
 </script>
 </body>
 </html>
